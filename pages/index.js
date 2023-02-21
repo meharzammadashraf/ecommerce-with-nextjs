@@ -2,10 +2,23 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
+import Home from './home/home'
+import { useState } from "react";
+import { items } from '../public/Items.json'
+// import { Carousel } from "react-bootstrap";
+// import "bootstrap/dist/css/bootstrap.min.css";
+
+
 
 const inter = Inter({ subsets: ['latin'] })
 
-export default function Home() {
+
+export default function Index() {
+  const { bootstrap } = items;
+  const [index, setIndex] = useState(0);
+  const handleSelect = (selectedIndex, e) => {
+    setIndex(selectedIndex);
+  };
   return (
     <>
       <Head>
@@ -14,10 +27,20 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-      <h1 className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
+      <main>
+      {/* <Carousel activeIndex={index} onSelect={handleSelect}>
+      {bootstrap.map((item) => (
+        <Carousel.Item key={item.id} className={styles.itemP} interval={1000}>
+          <img src={item.imageUrl} alt="slides" />
+          <Carousel.Caption className={styles.caption}>
+            <h3>{item.title}</h3>
+            <p>{item.body}</p>
+            <button className="btn btn-danger">Visit Docs</button>
+          </Carousel.Caption>
+        </Carousel.Item>
+      ))}
+    </Carousel> */}
+      <Home />
       </main>
     </>
   )
