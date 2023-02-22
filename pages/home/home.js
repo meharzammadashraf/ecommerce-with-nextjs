@@ -3,27 +3,23 @@ import React, { useEffect, useState } from 'react'
 import { App, database } from '../../firebase/firebase'
 import { getDocs, collection, getCountFromServer, doc, getDoc } from "firebase/firestore"; 
 import styles from '@/styles/Home.module.css'
-function Home() {
-  const [breakLoad, setBreakLoad] = useState(false)
-  const [allData, setAllData] = useState("")
 
-  
-  
-  const a = [];
-    const specificData = async ()=>{
-        const coll = collection(database, "products");
-const snapshots = await getCountFromServer(coll);
-const numberOfDocuments = snapshots.data().count
-console.log('count: ', numberOfDocuments);
-if (numberOfDocuments > 10) {
-    
-    for (let index = numberOfDocuments-9; index <= numberOfDocuments; index++) {
+export async function getStaticProps() {
+  // const specificData = async ()=>{
+    const a = [];
+    const coll = collection(database, "products");
+    const snapshots = await getCountFromServer(coll);
+    const numberOfDocuments = snapshots.data().count
+    console.log('count: ', numberOfDocuments);
+    if (numberOfDocuments > 10) {
+      
+      for (let index = numberOfDocuments-9; index <= numberOfDocuments; index++) {
         const docRef = doc(database, "products", `${index}`);
 const docSnap = await getDoc(docRef);
 
 if (docSnap.exists()) {
     a.push(docSnap.data())
-    setBreakLoad(true)
+    // setBreakLoad(true)
   console.log("Document data:", docSnap.data());
 } else {
   // doc.data() will be undefined in this case
@@ -34,14 +30,34 @@ if (docSnap.exists()) {
     const snapshot = await getDocs(collection(database, "products"));
 snapshot.forEach((doc) => {
   a.push(doc.data())
-  setBreakLoad(true)
+  // setBreakLoad(true)
 });
 }
-       setAllData(a) 
+      //  setAllData(a) 
+    // }
+      // !breakLoad ?
+      // specificData()
+      //  : "";
+  return {
+    props: {
+      posts:a
     }
-      !breakLoad ?
-      specificData()
-       : "";
+  }
+}
+
+
+
+
+
+
+
+
+function Home({posts}) {
+  console.log("posts...........", posts);
+  const [breakLoad, setBreakLoad] = useState(false)
+  const [allData, setAllData] = useState("")
+
+  
 
 //   const getData = async() =>{
 //     const coll = collection(database, "products");
@@ -63,8 +79,8 @@ snapshot.forEach((doc) => {
     <>
       <div className="mt-12 p-10 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
     {
-      allData ? 
-      allData.map((item)=>{
+      posts ? 
+      posts.map((item)=>{
         return(
           <div className="h-112 rounded overflow-hidden shadow-lg">
       <img className="w-full h-40" src={item.imageUrl} alt={item.title} />

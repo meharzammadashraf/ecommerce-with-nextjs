@@ -1,23 +1,37 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
-import Home from './home/home'
-import { useState } from "react";
-import { items } from '../public/Items.json'
-// import { Carousel } from "react-bootstrap";
-// import "bootstrap/dist/css/bootstrap.min.css";
-
-
+import React, { useEffect, useState } from 'react'
+import { App, database } from '../firebase/firebase'
+import { getDocs, collection, getCountFromServer, doc, getDoc } from "firebase/firestore";
+import Slider from 'react-slick'
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import Link from 'next/link'
 
 const inter = Inter({ subsets: ['latin'] })
 
 
-export default function Index() {
-  const { bootstrap } = items;
-  const [index, setIndex] = useState(0);
-  const handleSelect = (selectedIndex, e) => {
-    setIndex(selectedIndex);
+export default function Index({ posts }) {
+  console.log("posts...........", posts);
+  const [breakLoad, setBreakLoad] = useState(false)
+  const [allData, setAllData] = useState("")
+  const [featuredData, setFeaturedData] = useState()
+  useEffect(() => {
+    const newArray = posts.filter(function (el) {
+      return el.feature === "Featured";
+    });
+    setFeaturedData(newArray);
+  }, [])
+
+  var settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 2500,
   };
   return (
     <>
@@ -28,20 +42,107 @@ export default function Index() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
-      {/* <Carousel activeIndex={index} onSelect={handleSelect}>
-      {bootstrap.map((item) => (
-        <Carousel.Item key={item.id} className={styles.itemP} interval={1000}>
-          <img src={item.imageUrl} alt="slides" />
-          <Carousel.Caption className={styles.caption}>
-            <h3>{item.title}</h3>
-            <p>{item.body}</p>
-            <button className="btn btn-danger">Visit Docs</button>
-          </Carousel.Caption>
-        </Carousel.Item>
-      ))}
-    </Carousel> */}
-      <Home />
+        {
+          featuredData ?
+            <Slider {...settings} className="mt-12">
+              {
+                featuredData.map((item) => {
+                  return (
+                    <div>
+                      <Link href={`/${item.id.toString()}`}>
+                        <div class=" h-96 flex flex-wrap flex-col md:flex-row items-center justify-start">
+
+                          <div class="w-full p-3">
+                            <div class="flex flex-col lg:flex-row rounded overflow-hidden border shadow-lg">
+                              <img class="block flex-none bg-cover h-80" src={item.imageUrl} />
+                              <div class="bg-white rounded-b lg:rounded-b-none lg:rounded-r p-4 flex flex-col justify-between leading-normal">
+                                <div class="text-black text-lg mb-2 leading-tight">Description:</div>
+                                <div class="text-black text-md mb-2 leading-tight">{item.description}</div>
+                                <p class="text-grey-darker text-xl">Rs: {item.price} /<sub>=</sub></p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  )
+                })
+              }
+            </Slider>
+            : ""
+        }
+        <div className='mx-auto'>
+          <p className='mx-auto'>Latest Products</p>
+        </div>
+        <div className="mt-12 p-10 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {
+            posts ?
+              posts.map((item) => {
+                return (
+                  <div className="h-112 rounded overflow-hidden shadow-lg">
+                    <img className="w-full h-40" src={item.imageUrl} alt={item.title} />
+                    <div className="px-6 py-4 md:h-40 lg:h-48">
+                      <div className="font-bold text-xl mb-2">{item.title}</div>
+                      <p className="text-gray-700 text-base">
+                        {item.description.slice(0, 150)}
+                      </p>
+                    </div>
+                    <div className="px-6 pb-5">
+                      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Show Detail</button>
+                      <span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">Rs: {item.price}</span>
+                    </div>
+                  </div>
+                )
+              })
+              : ""
+          }
+        </div>
       </main>
     </>
   )
+}
+
+
+
+
+
+export async function getStaticProps() {
+  // const specificData = async ()=>{
+  const a = [];
+  const coll = collection(database, "products");
+  const snapshots = await getCountFromServer(coll);
+  const numberOfDocuments = snapshots.data().count
+  console.log('count: ', numberOfDocuments);
+  if (numberOfDocuments > 10) {
+
+    for (let index = numberOfDocuments - 9; index <= numberOfDocuments; index++) {
+      const docRef = doc(database, "products", `${index}`);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        a.push(docSnap.data())
+        // setBreakLoad(true)
+        console.log("Document data:", docSnap.data());
+      } else {
+        // doc.data() will be undefined in this case
+        console.log("No such document!");
+      }
+    }
+  } else {
+    const snapshot = await getDocs(collection(database, "products"));
+    snapshot.forEach((doc) => {
+      a.push(doc.data())
+      // setBreakLoad(true)
+    });
+  }
+  //  setAllData(a) 
+  // }
+  // !breakLoad ?
+  // specificData()
+  //  : "";
+  return {
+    props: {
+      posts: a
+    }
+  }
 }
